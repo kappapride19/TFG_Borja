@@ -56,36 +56,7 @@ class RandomBot(BotInterface):
         return None
 
     def on_commerce_phase(self):
-        if len(self.development_cards_hand.check_hand()) and random.randint(0, 1):
-            return self.development_cards_hand.select_card_by_id(self.development_cards_hand.hand[0].id)
-
-        answer = random.randint(0, 1)
-        if answer:
-            if self.hand.resources.cereal >= 4:
-                return {'gives': MaterialConstants.CEREAL, 'receives': MaterialConstants.MINERAL}
-            if self.hand.resources.mineral >= 4:
-                return {'gives': MaterialConstants.MINERAL, 'receives': MaterialConstants.CEREAL}
-            if self.hand.resources.clay >= 4:
-                return {'gives': MaterialConstants.CLAY, 'receives': MaterialConstants.CEREAL}
-            if self.hand.resources.wood >= 4:
-                return {'gives': MaterialConstants.WOOD, 'receives': MaterialConstants.CEREAL}
-            if self.hand.resources.wool >= 4:
-                return {'gives': MaterialConstants.WOOL, 'receives': MaterialConstants.CEREAL}
-
-            return None
-        else:
-            gives = Materials(random.randint(0, self.hand.resources.cereal),
-                              random.randint(0, self.hand.resources.mineral),
-                              random.randint(0, self.hand.resources.clay),
-                              random.randint(0, self.hand.resources.wood),
-                              random.randint(0, self.hand.resources.wool))
-            receives = Materials(random.randint(0, self.hand.resources.cereal),
-                                 random.randint(0, self.hand.resources.mineral),
-                                 random.randint(0, self.hand.resources.clay),
-                                 random.randint(0, self.hand.resources.wood),
-                                 random.randint(0, self.hand.resources.wool))
-            trade_offer = TradeOffer(gives, receives)
-            return trade_offer
+       return None
 
     def on_build_phase(self, board_instance):
         self.board = board_instance
@@ -105,7 +76,7 @@ class RandomBot(BotInterface):
                     return {'building': BuildConstants.TOWN, 'node_id': valid_nodes[town_node]}
             else:
                 valid_nodes = self.board.valid_road_nodes(self.id)
-                if len(valid_nodes):
+                if len(valid_nodes) and self.road_number()<15:
                     road_node = random.randint(0, len(valid_nodes) - 1)
                     return {'building': BuildConstants.ROAD,
                             'node_id': valid_nodes[road_node]['starting_node'],
@@ -155,3 +126,16 @@ class RandomBot(BotInterface):
     def on_year_of_plenty_card_use(self):
         material, material2 = random.randint(0, 4), random.randint(0, 4)
         return {'material': material, 'material_2': material2}
+    def road_number(self):
+        result = 0
+        starting_nodes = []
+        end_nodes = []
+        for node in self.board.nodes:
+            for road in self.board.nodes[node['id']]['roads']:
+                if road['player_id'] == self.id and not (
+                        (node['id'] in starting_nodes and road['node_id'] in end_nodes) or (
+                        road['node_id'] in starting_nodes and node['id'] in end_nodes)):
+                    result += 1
+                    starting_nodes.append(node['id'])
+                    end_nodes.append(road['node_id'])
+        return result

@@ -37,7 +37,7 @@ class Materials:
         self.wool = self.wool + amount
         return None
 
-    def has_this_more_materials(self, materials):
+    def  has_this_more_materials(self, materials):
         """
         Si le llega otra clase Materials() comprobará si hay más o igual materiales que los que hay en el parámetro y
         si le llega un string con lo que se quiere construir comprobará si tiene suficiente material para hacerlo.

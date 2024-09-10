@@ -6,9 +6,10 @@ class TurnManager:
     1 en el comercio, 2 en construcción y 3 en el final del turno
     """
 
-    def __init__(self, turn=0, whose_turn_is_it=0, phase=0, round=0):
+    def __init__(self, class_of_bot= '', turn=0, whose_turn_is_it=0, phase=0, round=0):
         self.turn = turn
         self.whose_turn_is_it = whose_turn_is_it
+        self.class_of_bot = class_of_bot
         self.phase = phase
         self.round = round
         return

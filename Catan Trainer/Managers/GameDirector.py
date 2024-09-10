@@ -7,18 +7,23 @@ class GameDirector:
     """
     Clase que se encarga de dirigir la partida, empezarla y acabarla
     """
-
-    def __init__(self, for_test=False):
-        self.game_manager = GameManager(for_test)
+    winner = -1
+    def __init__(self, for_test=False, for_advanced=False):
+        self.game_manager = GameManager(for_test,for_advanced)
         self.trace_loader = TraceLoader()
+        self.winner = -1
+
         return
 
-    def reset_game_values(self):
+    def reset_game_values(self, for_advanced=False, winner = -1):
         # Reseteamos la traza actual
         self.trace_loader.current_trace = {}
 
         # Reseteamos el game_manager
-        self.game_manager.reset_game_values()
+        if winner == -1:
+            self.game_manager.reset_game_values(for_advanced)
+        else:
+            self.game_manager.reset_game_values(for_advanced,winner)
         return
 
     # -- -- -- --  Turn  -- -- -- --
@@ -32,7 +37,7 @@ class GameDirector:
         start_turn_object = {'development_card_played': []}
 
         self.game_manager.set_phase(0)
-        self.game_manager.set_actual_player(player)
+        self.game_manager.set_actual_player(player, self.game_manager.get_player_bot(player))
 
         turn_start_response = self.game_manager.call_to_bot_on_turn_start(player)
 
@@ -46,6 +51,7 @@ class GameDirector:
 
             start_turn_object['dice'] = self.game_manager.get_last_dice_roll()
             start_turn_object['actual_player'] = str(self.game_manager.get_whose_turn_is_it())
+            start_turn_object['actual_bot_class'] = str(self.game_manager.get_player_bot(player))
 
             # Si ha salido un 7 en la tirada de dado se llama al ladrón
             start_turn_object = self.game_manager.check_if_thief_is_called(start_turn_object, player)
@@ -198,14 +204,16 @@ class GameDirector:
         return round_object, winner
 
     # Game #
-    def game_start(self, game_number=0):
+    def game_start(self, game_number=0,for_advanced =False):
         """
         Esta función permite comenzar una partida nueva.
         :param game_number: (int) número de partidas que se van a jugar.
         """
         # Se cargan los bots y se inicializa el tablero
         # self.game_manager.bot_manager.load_bots()
-        self.reset_game_values()
+
+        self.reset_game_values(for_advanced)
+        resume_object = {}
 
         # Se añade el tablero al setup, para que el intérprete sepa cómo es el tablero
         setup_object = {
@@ -235,6 +243,56 @@ class GameDirector:
 
         self.trace_loader.current_trace["setup"] = setup_object
         self.game_loop(game_number)
+        max_vic = 0
+        player_id = -1
+        for i in range(4):
+            if int(self.game_manager.get_players()[i]['victory_points']) >= max_vic:
+                max_vic = int(self.game_manager.get_players()[i]['victory_points'])
+                player_id = i
+                self.winner = player_id
+
+        if for_advanced:
+            resume_object = {
+                        "winner_id" : self.winner,
+                        "winner_class" : str(type(self.game_manager.get_players()[self.winner]['player'])),
+                        "winner_points" : str(self.game_manager.get_players()[self.winner]['victory_points']),
+                        "winner_largest_army" : str(self.game_manager.get_players()[self.winner]['largest_army']),
+                        "winner_longest_road": str(self.game_manager.get_players()[self.winner]['longest_road']),
+                        "winner_hide_points" : str(self.game_manager.get_players()[self.winner]['hidden_victory_points']),
+                        "first_player_class": str(type(self.game_manager.get_players()[0]['player'])),
+                        "second_player_class": str(type(self.game_manager.get_players()[1]['player'])),
+                        "third_player_class": str(type(self.game_manager.get_players()[2]['player'])),
+                        "fourth_player_class": str(type(self.game_manager.get_players()[3]['player'])),
+                        "number_rounds": str(self.game_manager.get_round()),
+                        "resume_bots": self.game_manager.get_classes()
+            }
+            # self.trace_loader.current_trace["resume"] = resume_object
+            # self.trace_loader.export_to_file(game_number)
+            self.reset_game_values(for_advanced, self.winner)
+            print('Distribution of victories:' + str(self.game_manager.get_victories()))
+            self.trace_loader.current_trace["resume"] = resume_object
+            self.trace_loader.export_to_file(game_number)
+        else:
+                resume_object = {
+                    "winner_id": self.winner,
+                    "winner_class": str(type(self.game_manager.get_players()[self.winner]['player'])),
+                    "winner_points": str(self.game_manager.get_players()[self.winner]['victory_points']),
+                    "winner_largest_army": str(self.game_manager.get_players()[self.winner]['largest_army']),
+                    "winner_longest_road": str(self.game_manager.get_players()[self.winner]['longest_road']),
+                    "winner_hide_points": str(self.game_manager.get_players()[self.winner]['hidden_victory_points']),
+                    "first_player_class": str(type(self.game_manager.get_players()[0]['player'])),
+                    "second_player_class": str(type(self.game_manager.get_players()[1]['player'])),
+                    "third_player_class": str(type(self.game_manager.get_players()[2]['player'])),
+                    "fourth_player_class": str(type(self.game_manager.get_players()[3]['player'])),
+                    "number_rounds": str(self.game_manager.get_round())
+                }
+                self.trace_loader.current_trace["resume"] = resume_object
+                self.trace_loader.export_to_file(game_number)
+                self.reset_game_values(for_advanced, self.winner)
+
+                # self.trace_loader.current_trace["resume"] = resume_object
+                # self.trace_loader.export_to_file(game_number)
+
         return
 
     def game_loop(self, game_number):
@@ -244,7 +302,7 @@ class GameDirector:
         """
         game_object = {}
         winner = False
-        while not winner:
+        while not winner and int(self.game_manager.get_round()) < 500:
             game_object['round_' + str(self.game_manager.get_round())], winner = self.round_start(winner)
             self.game_manager.set_round(self.game_manager.get_round() + 1)
 
@@ -252,8 +310,8 @@ class GameDirector:
         for i in range(4):
             print('J' + str(i) + ': ' + str(self.game_manager.get_players()[i]['victory_points']) + ' (' +
                   str(self.game_manager.get_players()[i]['largest_army']) + ')' + ' (' +
-                  str(self.game_manager.get_players()[i]['longest_road']) + ')')
+                  str(self.game_manager.get_players()[i]['longest_road']) + '), Bot class : ' + str(type(self.game_manager.get_players()[i]['player'])))
+        print('Number of rounds:' + str(len(game_object)) + ' rounds')
 
         self.trace_loader.current_trace["game"] = game_object
-        self.trace_loader.export_to_file(game_number)
         return

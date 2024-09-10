@@ -74,3 +74,30 @@ class DevelopmentCardConstants:
 
     def __init__(self):
         return
+
+
+class EstadosConstants:
+    """
+    Constantes para facilitar la legibilidad al trabajar con cartas de desarrollo
+    """
+
+    CARRETERA = 0
+    CIUDAD = 1
+    POBLADO = 2
+    CARTAS = 3
+
+    def __init__(self):
+        return
+
+class BotsConstants:
+    """
+    Constantes para facilitar la legibilidad al trabajar con cartas de desarrollo
+    """
+
+    Carretera = 0
+    Ciudad = 1
+    Poblados = 2
+    Cartas = 3
+
+    def __init__(self):
+        return

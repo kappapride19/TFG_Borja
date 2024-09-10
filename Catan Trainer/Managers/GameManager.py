@@ -15,7 +15,7 @@ class GameManager:
     MAX_COMMERCE_DEPTH = 2
     MAX_COMMERCE_TRADES = 2
 
-    def __init__(self, for_test=False):
+    def __init__(self, for_test=False, for_advanced=False):
         self.already_played_development_card = False
         self.last_dice_roll = 0
         self.largest_army = 2
@@ -27,10 +27,10 @@ class GameManager:
         self.development_cards_deck.shuffle_deck()
         self.turn_manager = TurnManager()
         self.commerce_manager = CommerceManager()
-        self.bot_manager = BotManager(for_test)
+        self.bot_manager = BotManager(for_test, for_advanced)
         return
 
-    def reset_game_values(self):
+    def reset_game_values(self, for_advanced=False, winner=-1):
         """
         Reinicia las variables al valor inicial
         :return: None
@@ -45,7 +45,12 @@ class GameManager:
         self.development_cards_deck = DevelopmentDeck()
         self.development_cards_deck.shuffle_deck()
         self.turn_manager = TurnManager()
-        self.bot_manager.reset_game_values()
+        if winner == -1:
+            self.bot_manager.reset_game_values(for_advanced)
+        else :
+            self.bot_manager.reset_game_values(for_advanced, winner)
+
+
         return
 
     def throw_dice(self):
@@ -683,12 +688,19 @@ class GameManager:
         """
         return self.bot_manager.players
 
-    def set_actual_player(self, player_id=0):
+    def get_player_bot(self, id):
+        """
+        :return: list
+        """
+        return str(type(self.bot_manager.players[id]['player']))
+
+    def set_actual_player(self,class_of_bot , player_id=-1):
         """
         :param player_id: int
         :return: None
         """
         self.turn_manager.actual_player = player_id
+        self.turn_manager.class_of_bot = class_of_bot
         return
 
     def get_last_dice_roll(self):
@@ -922,3 +934,9 @@ class GameManager:
         else:
             build_phase_object['building'] = 'None'
             return build_phase_object, winner
+
+
+    def get_victories (self):
+        return self.bot_manager.get_victories()
+    def get_classes(self):
+        return self.bot_manager.get_classes()
